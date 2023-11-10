@@ -24,7 +24,7 @@ print("hi")
 
 
 # maybe skip this when I've figured out the model?
-parquet_file = pq.ParquetFile('C:/Users/torie/Documents/Python Scripts/Streamlit/credit_card_data_da.parquet')
+parquet_file = pq.ParquetFile('credit_card_data_da.parquet')
 for batch in parquet_file.iter_batches():
     print("RecordBatch")
     batch_df = batch.to_pandas()
