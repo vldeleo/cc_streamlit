@@ -1,0 +1,9 @@
+streamlit
+pandas
+pyarrow
+warnings
+matplotlib
+sklearn
+joblib
+numpy
+
