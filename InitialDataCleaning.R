@@ -13,6 +13,18 @@ colSums(is.na(cc_data))
 
 #weirdly, the number of users does not match the number of persons in the dataset
 cc_data[which(level(cc_data$User) != level(cc_data$Person)),]
+  # Hazel Robinson is one
+
+
+test <- cc_data %>% group_by(Person, User) %>% 
+  summarise(numUsers = n()) 
+test$Person[which(duplicated(test$Person))]
+# Casey El-Mafouk, Hazel Robinson, Lochlan Morris, Magdalena Farhad, Rory Nelson
+dupUsers <- c("Casey El-Mafouk", "Hazel Robinson", "Lochlan Morris", "Magdalena Farhad", "Rory Nelson")
+
+nrow(cc_data[cc_data$User %in% dupUsers & cc_data$`Is Fraud?` == "Yes",])
+# none of these duplicate users have had fraudulent transactions...
+
 
 
 # fill in merchant state/zip?
@@ -23,6 +35,8 @@ cc_data$GeoDiff <- cc_data$Zip != cc_data$Zipcode
 sum(cc_data$Amount[cc_data$`Is Fraud?` == "Yes"])
 sum(cc_data$`Is Fraud?` == "Yes") #8412 (so not very many, just .122% of transactions are fraud)
 # in order to get enough to try classifying, we need probably at least 20k
+
+
 
 set.seed(3110)
 subset <- cc_data[sample(1:nrow(cc_data), 20000),] # a small set to play with
