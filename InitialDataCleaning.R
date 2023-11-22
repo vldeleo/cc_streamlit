@@ -5,7 +5,7 @@ library(ggplot2)
 library(maps)
 library(lubridate)
 
-cc_data <- read_parquet("C:/Users/torie/Documents/Python Scripts/Streamlit/credit_card_data_da.parquet")
+cc_data <- read_parquet("credit_card_data_da.parquet")
 
 colSums(is.na(cc_data))
 
