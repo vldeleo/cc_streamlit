@@ -143,7 +143,7 @@ server <- function(input, output) {
     region = c(rep("Pacific", 5), rep("West", 10), rep("Northeast",11), rep("South", 13), rep("Midwest", 11), "DC")
   )
 
-    cc_data <- read_parquet("C:/Users/torie/Documents/Python Scripts/Streamlit/cc_data_subset.parquet")
+    cc_data <- read_parquet("cc_data_subset3.parquet")
       # I was trying to do this on the subsetted dataframe, but no reason why I can't just pre-process this way
     cc_data$`Use Chip` <- ifelse(cc_data$`Use Chip` == "Chip Transaction", 1, 0) 
     cc_data$`Errors?` <- ifelse(cc_data$`Errors?` == "No", 0, 1 )
@@ -153,6 +153,7 @@ server <- function(input, output) {
     cc_data$time_of_day <- as.numeric(as.factor(cc_data$time_of_day))
     cc_data$DatestoExp <- as.numeric(cc_data$Expires - as_date(trunc(cc_data$datetime, "months")))
     cc_data$GeoDiff <- as.numeric(cc_data$GeoDiff)
+    cc_data$GeoDiff[is.na(cc_data$GeoDiff)] <- 1 # if we don't know that the zip codes are the same, let's guess they aren't
 
     
     #####################################################################
@@ -237,10 +238,10 @@ server <- function(input, output) {
       xlab("") +
       ylab("Transactions")+
       theme_minimal() +
-      theme(axis.text.y = element_blank(),
-            axis.title.y = element_blank(),
-            panel.grid.major.y = element_blank()#,
-            #panel.grid.minor.y = element_blank()
+      theme(#axis.text.y = element_blank(),
+            #axis.title.y = element_blank(),
+            #panel.grid.major.y = element_blank()#,
+            panel.grid.minor.y = element_blank()
       ) +
       scale_x_date(date_breaks = "1 month"
                    , date_labels = "%Y\n%b-%d") +
@@ -437,6 +438,13 @@ server <- function(input, output) {
       #labs(x = "Age", y = "Years Since Pin Change") +
       #theme_bw()
     
+    #function to calculate error bars
+    get.se <- function(y) {
+      se <- sd(y)/sqrt(length(y))
+      mu <- mean(y)
+      c(ymin=mu-se, ymax=mu+se)
+    }
+    
     aload <- abs(pca.load())
     readytoplot <- sweep(aload, 2, colSums(aload), "/") 
     orderfactor <- readytoplot %>%
@@ -449,8 +457,10 @@ server <- function(input, output) {
     data.frame(Ydata = as.numeric(unlist(Ydata)), 
                Label = Label) %>%
     ggplot(aes(y = Ydata, x = as.factor(Label), col = as.factor(Label))) + #cc_sub()[,indexcol]
-      geom_violin(lwd = 2, alpha = 0.5) +
-      geom_jitter(height = 0.02, width = 0.25, show_guide = FALSE, alpha = 0.25) +
+      #geom_violin(lwd = 2, alpha = 0.5) +
+      stat_summary(fun=mean, geom="bar", fill = NA, lwd = 2)+
+      stat_summary(fun.data=get.se, geom="errorbar", width=0.1, position=position_dodge(width=0.9)) +
+      geom_jitter(height = 0.02, width = 0.25, show_guide = FALSE, alpha = 0.15, col = "gray") +
       labs(y = orderfactor[1], col = input$customergroups, x = "") +
       scale_color_manual(values=met.brewer("Austria"))+
       theme(axis.text.x = element_blank()

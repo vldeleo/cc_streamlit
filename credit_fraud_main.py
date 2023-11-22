@@ -3,6 +3,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 from matplotlib import pyplot as plt # should maybe use plotly instead
 #from credit_fraud_predictions import predict
+import datetime
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore') # so warnings aren't plotted in streamlit app?
@@ -114,11 +115,109 @@ with col5:
     plt.title("Type I and II Error")
     sl.write(fig3)
 
-#with col6:
-#accuracy, precision, true positive/false negative 
-
+with col6:
+    #accuracy, precision, true positive/false negative 
+    #batch_df2['week']=datetime.date(batch_df2['date']).isocalendar().week
+    fig4=plt.figure()
+    #fig4, ax1 = plt.subplots()
+    #ax1.set_xlabel('Date') 
+    #ax1.set_ylabel('True Positives', color = 'red') 
+    batch_df2[['Month', 'Amount']].groupby('Month').mean().plot(type="bar")
+    
+    #plt.bar(batch_df2['Month'], batch_df2[['Amount']].groupby('Month').sum())
+    
+    #ax1.plot(batch_df2['date'], batch_df2[(batch_df2['FraudBin'] == 1) & (batch_df2['AlertFraud'] == 1)].sum(), color = 'red') 
+    #ax1.tick_params(axis ='y', labelcolor = 'red') 
+    # twin axes so I can plot a different Y
+    #ax2 = ax1.twinx() 
+    #ax2.set_ylabel('Y2-axis', color = 'blue') 
+    #ax2.plot(x, data_2, color = 'blue') 
+    #ax2.tick_params(axis ='y', labelcolor = 'blue') 
+    #plt.title("True Positives/False Negatives")
+    #plt.xlabel('Date')
+    sl.write(fig4)
 
 sl.subheader("Transaction Anomalies")
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+from sklearn.datasets import make_blobs
+from sklearn.preprocessing import StandardScaler # these might be unnecessary for my toy model
+from sklearn.preprocessing import MinMaxScaler
+from sklearn import datasets
+
+from sklearn.cluster import DBSCAN
+import numpy as np
+'''
+scaler = MinMaxScaler()
+#X=scaler.fit_transform(batch_df2.iloc[: , [0:13,15:62,64]]) # I can't transform factors!
+X=batch_df2.iloc[: , 0:13] # 15:62, 64
+
+#min should be 2 * number of dimensions
+clustering = DBSCAN(eps=3, min_samples=126).fit(X)
+clustering.labels_
+'''
+'''
+X, y_true = make_blobs(n_samples=1000, centers=4,
+                       cluster_std=0.50, random_state=0)
+db = DBSCAN(eps=0.3, min_samples=10).fit(X)
+core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
+labels = db.labels_
+ 
+# Number of clusters in labels, ignoring noise if present.
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+ 
+# Plot result
+# Black used for noise 
+unique_labels = set(labels)
+colors = ['y', 'b', 'g', 'r']
+print(colors)
+for k, col in zip(unique_labels, colors):
+    if k == -1:
+        col = 'k'
+ 
+    class_member_mask = (labels == k)
+ 
+    xy = X[class_member_mask & core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+             markeredgecolor='k',
+             markersize=6)
+ 
+    xy = X[class_member_mask & ~core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+             markeredgecolor='k',
+             markersize=6)
+ 
+plt.title('number of clusters: %d' % n_clusters_)
+plt.show()
+sc = metrics.silhouette_score(X, labels)
+print("Silhouette Coefficient:%0.2f" % sc)
+ari = adjusted_rand_score(y_true, labels)
+print("Adjusted Rand Index: %0.2f" % ari)
+'''
+
+#alternative method
+#scaler = MinMaxScaler() 
+#num2 = scaler.fit_transform(batch_df2.iloc[: , [0:13,15:62,64]])
+num2 = batch_df2.iloc[: , 0:13] #15:62,64
+
+outlier_detection = DBSCAN(
+ eps = .2, 
+ metric='gower', 
+ min_samples = 28, #2xdimensions
+ n_jobs = -1)
+#clusters = outlier_detection.fit_predict(num2)
+clusters = DBSCAN(eps=3, min_samples=28).fit(num2)
+
+sl.write(clusters.labels_)
+
+'''
+from matplotlib import cm
+cmap = cm.get_cmap('Set1')
+plt.scatter(x='Amount', y ='Income', c=clusters, cmap=cmap,
+ colorbar = False)
+'''
+
 col7, col8, col9= sl.columns(3)
 
 
